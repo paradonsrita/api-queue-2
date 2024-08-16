@@ -131,38 +131,65 @@ namespace ApiIsocare2.Controllers
                 var today = DateTime.Today;
                 var maxDate = today.AddDays(30);
 
-                var result = _db.BookingQueues
-                                .Where(q => q.appointment_date <= maxDate && q.appointment_date > today && q.queue_type_id == transaction)
-                                .GroupBy(q => q.appointment_date)
-                                .Select(g => new
-                                {
-                                    QueueTypeId = transaction,
-                                    Date = g.Key,
-                                    Total = g.Count()
-                                })
-                                .ToList();
+                // 1. สร้างรายการของทุกวันและเวลาที่เป็นไปได้
+                var timesOfInterest = new[] { new TimeSpan(8, 0, 0), new TimeSpan(13, 0, 0) };
+                var allDatesAndTimes = Enumerable.Range(0, (maxDate - today).Days + 1)
+                    .SelectMany(d => timesOfInterest.Select(t => today.AddDays(d).Date.Add(t)))
+                    .ToList();
 
-               
+                // 2. ดึงข้อมูลจากฐานข้อมูลและจัดกลุ่มตามวันที่และเวลา
+                var bookingData = _db.BookingQueues
+                    .Where(q => q.appointment_date <= maxDate && q.appointment_date > today && q.queue_type_id == transaction)
+                    .GroupBy(q => new
+                    {
+                        Date = q.appointment_date.Date,
+                        Time = q.appointment_date.TimeOfDay
+                    })
+                    .Select(g => new
+                    {
+                        Date = g.Key.Date,
+                        Time = g.Key.Time,
+                        Total = g.Count()
+                    })
+                    .ToList();
+
+                // 3. รวมผลลัพธ์เข้ากับรายการของทุกวันและเวลาที่เป็นไปได้
+                var result = allDatesAndTimes
+                    .Select(d => new
+                    {
+                        Date = d.Date,
+                        Time = d.TimeOfDay,
+                        Total = bookingData.FirstOrDefault(b => b.Date == d.Date && b.Time == d.TimeOfDay)?.Total ?? 0
+                    })
+                    .ToList();
+
                 return Ok(result);
-                
-
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                // คำแนะนำในการจัดการข้อผิดพลาดที่เหมาะสม
+                return StatusCode(500, new { message = "An error occurred", detail = ex.Message });
             }
-            
         }
 
-        
+
         [HttpPost("add-queue")]
         public async Task<IActionResult> AddBooking(int userId, string type, DateTime appointmentDate)
         {
             try
             {
+                // ตรวจสอบและปรับเวลา appointmentDate
+                var timeOfDay = appointmentDate.TimeOfDay;
+                if (timeOfDay != new TimeSpan(8, 0, 0) && timeOfDay != new TimeSpan(13, 0, 0))
+                {
+                    return BadRequest("Appointment time must be 08:00 or 13:00.");
+                }
+
+                // แก้ไขค่าเวลาให้เป็น 08:00 หรือ 13:00
+                var correctedAppointmentDate = appointmentDate.Date.Add(timeOfDay);
 
                 var number = await _db.BookingQueues
-                                .Where(q => q.appointment_date.Date == appointmentDate.Date && q.queue_type_id == type)
+                                .Where(q => q.appointment_date.Date == correctedAppointmentDate.Date && q.queue_type_id == type)
                                 .OrderByDescending(q => q.queue_number)
                                 .Select(q => q.queue_number)
                                 .FirstOrDefaultAsync();
@@ -176,7 +203,7 @@ namespace ApiIsocare2.Controllers
                     queue_status_id = 0,
                     user_id = userId,
                     booking_date = DateTime.Now,
-                    appointment_date = appointmentDate,
+                    appointment_date = correctedAppointmentDate,
                     counter = 0
                 };
                 _db.BookingQueues.Add(queue);
