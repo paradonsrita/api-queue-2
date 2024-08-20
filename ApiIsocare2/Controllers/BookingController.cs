@@ -71,8 +71,8 @@ namespace ApiIsocare2.Controllers
                                         qu.phone_number,
                                         qu.citizen_id_number
                                     })
-                               .Where(q => q.user_id == userId)
-                               .FirstOrDefaultAsync();
+                                .Where(q => q.user_id == userId)
+                                .ToListAsync();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -179,14 +179,12 @@ namespace ApiIsocare2.Controllers
             try
             {
                 // แปลงเวลาจาก appointmentTime เป็น TimeSpan
-                var timeParts = appointmentTime.Split(':');
-                if (timeParts.Length != 2 || !int.TryParse(timeParts[0], out int hour) || !int.TryParse(timeParts[1], out int minute))
+                if (!TimeSpan.TryParse(appointmentTime, out var timeOfDay))
                 {
                     return BadRequest("Invalid appointment time format.");
                 }
 
                 // ตรวจสอบและปรับเวลา appointmentDate
-                var timeOfDay = new TimeSpan(hour, minute, 0);
                 if (timeOfDay != new TimeSpan(8, 0, 0) && timeOfDay != new TimeSpan(13, 0, 0))
                 {
                     return BadRequest("Appointment time must be 08:00 or 13:00.");
