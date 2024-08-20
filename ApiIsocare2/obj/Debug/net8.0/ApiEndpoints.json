@@ -57,6 +57,11 @@
         "Name": "appointmentDate",
         "Type": "System.DateTime",
         "IsRequired": false
+      },
+      {
+        "Name": "appointmentTime",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -352,13 +357,7 @@
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "type",
-        "Type": "System.String",
-        "IsRequired": false
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   }
 ]

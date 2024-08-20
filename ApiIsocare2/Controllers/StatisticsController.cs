@@ -18,7 +18,7 @@ namespace ApiIsocare2.Controllers
         }
 
         [HttpGet("daily-statistics")]
-        public IActionResult DailyStatistics([FromQuery] string type = "total")
+        public IActionResult DailyStatistics()
         {
             try
             {
@@ -63,18 +63,9 @@ namespace ApiIsocare2.Controllers
                     .ThenBy(q => q.queue_date)
                     .ToList();
 
-                if (type == "counter")
-                {
-                    return Ok(counterStatistics);
-                }
-                else if (type == "booking")
-                {
-                    return Ok(bookingStatistics);
-                }
-                else
-                {
+                
                     return Ok(totalStatistics);
-                }
+                
             }
             catch (Exception ex)
             {
@@ -90,20 +81,32 @@ namespace ApiIsocare2.Controllers
             {
                 if (minDate > maxDate)
                 {
-                    return BadRequest("minDate should be less maxDate");
+                    return BadRequest("minDate should be less then maxDate");
                 }
 
                 var bookingQueue = _db.BookingQueues
+                    .Include(q => q.QueueType)
                     .Where(q => q.appointment_date >= minDate && q.appointment_date <= maxDate)
-                    .GroupBy(q => new { q.queue_type_id, Date = q.appointment_date.Date })
+                    .GroupBy(q => new 
+                    { 
+                        q.QueueType.type_name,
+                        Date = q.appointment_date.Date,
+                        Time = q.appointment_date.TimeOfDay == TimeSpan.FromHours(8)
+                                ? "08:00:00"
+                                : q.appointment_date.TimeOfDay == TimeSpan.FromHours(13)
+                                    ? "13:00:00"
+                                    : "Other"
+                    })
                     .Select(group => new
                     {
-                        group.Key.queue_type_id,
+                        group.Key.type_name,
                         group.Key.Date,
+                        group.Key.Time,
                         Total = group.Count()
                     })
-                    .OrderBy(group => group.queue_type_id)
+                    .OrderBy(group => group.type_name)
                     .ThenBy(group => group.Date)
+                    .ThenBy(group => group.Time)
                     .ToList();
                 return Ok(bookingQueue);
             }

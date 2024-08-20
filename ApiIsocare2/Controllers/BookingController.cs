@@ -174,12 +174,19 @@ namespace ApiIsocare2.Controllers
 
 
         [HttpPost("add-queue")]
-        public async Task<IActionResult> AddBooking(int userId, string type, DateTime appointmentDate)
+        public async Task<IActionResult> AddBooking(int userId, string type, DateTime appointmentDate, string appointmentTime)
         {
             try
             {
+                // แปลงเวลาจาก appointmentTime เป็น TimeSpan
+                var timeParts = appointmentTime.Split(':');
+                if (timeParts.Length != 2 || !int.TryParse(timeParts[0], out int hour) || !int.TryParse(timeParts[1], out int minute))
+                {
+                    return BadRequest("Invalid appointment time format.");
+                }
+
                 // ตรวจสอบและปรับเวลา appointmentDate
-                var timeOfDay = appointmentDate.TimeOfDay;
+                var timeOfDay = new TimeSpan(hour, minute, 0);
                 if (timeOfDay != new TimeSpan(8, 0, 0) && timeOfDay != new TimeSpan(13, 0, 0))
                 {
                     return BadRequest("Appointment time must be 08:00 or 13:00.");
