@@ -23,13 +23,13 @@ namespace ApiIsocare2.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login(string citizenId,string password)
+        public IActionResult Login([FromBody] LoginModel loginModel)
         {
             try
             {
-                var hashedPassword = PasswordHasher.HashPassword(password);
+                var hashedPassword = PasswordHasher.HashPassword(loginModel.password);
                 var user = _db.Users
-                    .Where(u => u.citizen_id_number == citizenId && u.password == hashedPassword)
+                    .Where(u => u.citizen_id_number == loginModel.citizenId && u.password == hashedPassword)
                     .Select(u => new { u.citizen_id_number, u.password })
                     .SingleOrDefault();
 

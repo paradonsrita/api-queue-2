@@ -207,14 +207,9 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "citizenId",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "password",
-        "Type": "System.String",
-        "IsRequired": false
+        "Name": "loginModel",
+        "Type": "ApiIsocare2.Models.LoginModel",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []
