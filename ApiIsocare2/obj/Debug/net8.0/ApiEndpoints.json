@@ -310,6 +310,22 @@
   },
   {
     "ContainingType": "ApiIsocare2.Controllers.ResetPasswordController",
+    "Method": "OtpCheck",
+    "RelativePath": "api/ResetPassword/otp-check",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "ApiIsocare2.Models.ResetPasswordModel",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "ApiIsocare2.Controllers.ResetPasswordController",
     "Method": "ResetPassword",
     "RelativePath": "api/ResetPassword/resetpassword",
     "HttpMethod": "POST",

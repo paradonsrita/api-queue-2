@@ -65,23 +65,56 @@ namespace ApiIsocare2.Controllers
             }
         }
 
+        [HttpPut("otp-check")]
+        public IActionResult OtpCheck([FromBody] ResetPasswordModel model)
+        {
+            try
+            {
+                var user = _db.Users.SingleOrDefault(u => u.reset_token == model.otp && u.ResetTokenExpiry > DateTime.UtcNow);
+                if (user == null)
+                {
+                    // หาก OTP ไม่ถูกต้องหรือหมดอายุ ให้ลบ otp และ ResetTokenExpiry
+                    var failedUser = _db.Users.SingleOrDefault(u => u.reset_token == model.otp);
+                    if (failedUser != null)
+                    {
+                        failedUser.reset_token = null;
+                        failedUser.ResetTokenExpiry = null;
+                        _db.SaveChanges();
+                    }
+                    return BadRequest("OTP ไม่ถูกต้องหรือหมดอายุ. กรุณาขอ OTP ใหม่.");
+                }
+                return NoContent();
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500,ex.Message);
+            }
+        }
 
         [HttpPost("resetpassword")]
         public IActionResult ResetPassword([FromBody] ResetPasswordModel model)
         {
-            var user = _db.Users.SingleOrDefault(u => u.reset_token == model.otp && u.ResetTokenExpiry > DateTime.UtcNow);
-            if (user == null)
+            try
             {
-                return BadRequest("OTP ไม่ถูกต้องหรือหมดอายุ.");
+                var user = _db.Users.SingleOrDefault(u => u.reset_token == model.otp && u.ResetTokenExpiry > DateTime.UtcNow);
+                if (user == null)
+                {
+                    return BadRequest("OTP ไม่ถูกต้องหรือหมดอายุ.");
+                }
+                var hashedPassword = PasswordHasher.HashPassword(model.newPassword);
+                user.password = hashedPassword;
+                user.reset_token = null; // ลบรหัส OTP
+                user.ResetTokenExpiry = null;
+                _db.SaveChanges();
+
+                return Ok(new { Message = "รีเซ็ตรหัสผ่านเรียบร้อยแล้ว." });
             }
-
-            var hashedPassword = PasswordHasher.HashPassword(model.newPassword);
-            user.password = hashedPassword;
-            user.reset_token = null; // ลบรหัส OTP
-            user.ResetTokenExpiry = null;
-            _db.SaveChanges();
-
-            return Ok(new { Message = "รีเซ็ตรหัสผ่านเรียบร้อยแล้ว." });
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+            
         }
     }
 }
