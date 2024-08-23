@@ -65,16 +65,16 @@ namespace ApiIsocare2.Controllers
             }
         }
 
-        [HttpPut("otp-check")]
-        public IActionResult OtpCheck([FromBody] ResetPasswordModel model)
+        [HttpPost("otp-check")]
+        public IActionResult OtpCheck([FromBody] string Otp)
         {
             try
             {
-                var user = _db.Users.SingleOrDefault(u => u.reset_token == model.otp && u.ResetTokenExpiry > DateTime.UtcNow);
+                var user = _db.Users.SingleOrDefault(u => u.reset_token == Otp && u.ResetTokenExpiry > DateTime.UtcNow);
                 if (user == null)
                 {
                     // หาก OTP ไม่ถูกต้องหรือหมดอายุ ให้ลบ otp และ ResetTokenExpiry
-                    var failedUser = _db.Users.SingleOrDefault(u => u.reset_token == model.otp);
+                    var failedUser = _db.Users.SingleOrDefault(u => u.reset_token == Otp);
                     if (failedUser != null)
                     {
                         failedUser.reset_token = null;

@@ -312,13 +312,13 @@
     "ContainingType": "ApiIsocare2.Controllers.ResetPasswordController",
     "Method": "OtpCheck",
     "RelativePath": "api/ResetPassword/otp-check",
-    "HttpMethod": "PUT",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "model",
-        "Type": "ApiIsocare2.Models.ResetPasswordModel",
+        "Name": "Otp",
+        "Type": "System.String",
         "IsRequired": true
       }
     ],
@@ -383,6 +383,22 @@
         "Name": "userId",
         "Type": "System.Int32",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "ApiIsocare2.Controllers.UserController",
+    "Method": "EditProfile",
+    "RelativePath": "api/User",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "newUser",
+        "Type": "ApiIsocare2.Models.User",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

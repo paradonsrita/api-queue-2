@@ -64,7 +64,7 @@ namespace ApiIsocare2.Controllers
                     .ToList();
 
                 
-                    return Ok(totalStatistics);
+                return Ok(totalStatistics);
                 
             }
             catch (Exception ex)
@@ -90,25 +90,49 @@ namespace ApiIsocare2.Controllers
                     .GroupBy(q => new 
                     { 
                         q.QueueType.type_name,
+                        Source = "booking",
                         Date = q.appointment_date.Date,
-                        Time = q.appointment_date.TimeOfDay == TimeSpan.FromHours(8)
+                        /*Time = q.appointment_date.TimeOfDay == TimeSpan.FromHours(8)
                                 ? "08:00:00"
                                 : q.appointment_date.TimeOfDay == TimeSpan.FromHours(13)
                                     ? "13:00:00"
-                                    : "Other"
+                                    : "Other"*/
                     })
                     .Select(group => new
                     {
-                        group.Key.type_name,
                         group.Key.Date,
-                        group.Key.Time,
+                        group.Key.Source,
+                        group.Key.type_name,
                         Total = group.Count()
                     })
-                    .OrderBy(group => group.type_name)
-                    .ThenBy(group => group.Date)
-                    .ThenBy(group => group.Time)
                     .ToList();
-                return Ok(bookingQueue);
+
+                var counterQueue = _db.CounterQueues
+                    .Include(q => q.QueueType)
+                    .Where(q => q.queue_date >= minDate && q.queue_date <= maxDate)
+                    .GroupBy(q => new
+                    {
+                        q.QueueType.type_name,
+                        Source = "counter",
+                        Date = q.queue_date.Date,
+                    })
+                    .Select(group => new
+                    {
+                        group.Key.Date,
+                        group.Key.Source,
+                        group.Key.type_name,
+                        Total = group.Count()
+                    })
+                    .ToList();
+
+                var totalQueue = bookingQueue
+                    .Concat(counterQueue)
+                    .OrderBy(q => q.Date)
+                    .ThenBy(q => q.Source)
+                    .ThenBy (q => q.type_name)
+                    .ToList();
+
+                return Ok(totalQueue);
             }
             catch (Exception ex)
             {
@@ -118,3 +142,5 @@ namespace ApiIsocare2.Controllers
         }
     }
 }
+
+
