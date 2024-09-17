@@ -1,10 +1,8 @@
 ﻿using ApiIsocare2.Data;
 using ApiIsocare2.Models;
 using ApiIsocare2.Utilities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+
 
 namespace ApiIsocare2.Controllers
 {
@@ -22,15 +20,20 @@ namespace ApiIsocare2.Controllers
 
         }
 
+        // api/LogicRegister/login
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginModel loginModel)
         {
+            if (loginModel == null)
+            {
+                return BadRequest("Invalid login data.");
+            }
             try
             {
                 var hashedPassword = PasswordHasher.HashPassword(loginModel.password);
                 var user = _db.Users
                     .Where(u => u.citizen_id_number == loginModel.citizenId && u.password == hashedPassword)
-                    .Select(u => new { u.citizen_id_number, u.password })
+                    .Select(u => new { u.user_id, u.citizen_id_number, u.password })
                     .SingleOrDefault();
 
 
@@ -42,7 +45,7 @@ namespace ApiIsocare2.Controllers
                         return StatusCode(500, "ข้อผิดพลาด: คีย์ JWT สั้นเกินไป.");
                     }
                     var token = JwtHelper.GenerateJwtToken(
-                       user.citizen_id_number,
+                       user.user_id.ToString(),
                         key,
                        _configuration["Jwt:Issuer"],
                        _configuration["Jwt:Audience"]
@@ -55,11 +58,13 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error : {ex.Message}");
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
 
         }
 
+        // api/LogicRegister/register
         [HttpPost("register")]
         public IActionResult Register([FromBody] User registerModel)
         {
@@ -67,7 +72,11 @@ namespace ApiIsocare2.Controllers
             {
                 if (_db.Users.Any(u => u.citizen_id_number == registerModel.citizen_id_number))
                 {
-                    return BadRequest("Username already exists.");
+                    return BadRequest("หมายเลขบัตรประจำตัวประชาชนนี้ถูกใช้ไปแล้ว");
+                }
+                if (_db.Users.Any(u => u.user_email == registerModel.user_email))
+                {
+                    return BadRequest("อีเมลนี้ถูกใช้ไปแล้ว");
                 }
 
                 var hashedPassword = PasswordHasher.HashPassword(registerModel.password);

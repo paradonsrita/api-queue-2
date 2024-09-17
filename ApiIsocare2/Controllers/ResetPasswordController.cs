@@ -2,7 +2,6 @@
 using ApiIsocare2.Models;
 using ApiIsocare2.Utilities;
 using ApiIsocare2.Utilities.Interface;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,14 +12,12 @@ namespace ApiIsocare2.Controllers
     public class ResetPasswordController : ControllerBase
     {
         private readonly AppDbContext _db;
-        private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
 
 
-        public ResetPasswordController(AppDbContext db, IConfiguration configuration, IEmailService emailService)
+        public ResetPasswordController(AppDbContext db, IEmailService emailService)
         {
             _db = db;
-            _configuration = configuration;
             _emailService = emailService;
         }
 
@@ -112,9 +109,10 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
+
         }
     }
 }

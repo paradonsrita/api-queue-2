@@ -1,8 +1,9 @@
-﻿using ApiIsocare2.Data;
+﻿using System.Security.Claims;
+using ApiIsocare2.Data;
 using ApiIsocare2.Models;
-using Microsoft.AspNetCore.Http;
+using ApiIsocare2.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using MySqlX.XDevAPI.Common;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiIsocare2.Controllers
 {
@@ -11,18 +12,32 @@ namespace ApiIsocare2.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _db;
-        public UserController(AppDbContext db)
+        private readonly IConfiguration _configuration;
+        public UserController(AppDbContext db, IConfiguration Configuration)
         {
             _db = db;
+            _configuration = Configuration;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUserData(int userId)
+        public async Task<IActionResult> GetUserData()
         {
             try
             {
-                var result = _db.Users
-                    .Where(u => u.user_id == userId)
+
+
+                var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+                var userId = JwtHelper.GetUserIdFromToken(token, _configuration);
+
+                if (!userId.HasValue)
+                {
+                    return Unauthorized("Invalid token.");
+                }
+
+                
+
+                var result = await _db.Users
+                    .Where(u => u.user_id == userId.Value)
                     .Select(u => new 
                     {
                         u.user_id,
@@ -32,11 +47,11 @@ namespace ApiIsocare2.Controllers
                         u.phone_number,
                         u.user_email
                     })
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
 
                 if (result == null)
                 {
-                    return NotFound();
+                    return NotFound("User not found.");
                 }
 
                 return Ok(result);
@@ -44,7 +59,8 @@ namespace ApiIsocare2.Controllers
             }
             catch(Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
         }
 
@@ -71,9 +87,10 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
+
         }
     }
 }

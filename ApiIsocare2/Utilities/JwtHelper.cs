@@ -8,26 +8,70 @@ namespace ApiIsocare2.Utilities
 {
     public class JwtHelper
     {
-        public static string GenerateJwtToken(string username, string key, string issuer, string audience)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        private static IConfiguration _configuration;
 
-            var claims = new[]
+        public static void Initialize(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+        public static string GenerateJwtToken(string userId, string key, string issuer, string audience)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var keyBytes = Encoding.ASCII.GetBytes(key);
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                new Claim(JwtRegisteredClaimNames.Sub, username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userId)
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: credentials
-            );
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+
+        public static int? GetUserIdFromToken(string token, IConfiguration configuration)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            try
+            {
+                var jwtToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
+
+                if (jwtToken == null)
+                {
+                    return null;
+                }
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = configuration["Jwt:Issuer"],
+                    ValidAudience = configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["Jwt:Key"]))
+                };
+
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
+                var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (userIdClaim == null)
+                {
+                    return null;
+                }
+
+                return int.Parse(userIdClaim.Value);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

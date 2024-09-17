@@ -1,6 +1,5 @@
 ﻿using ApiIsocare2.Data;
 using ApiIsocare2.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +16,7 @@ namespace ApiIsocare2.Controllers
             _db = db;
         }
 
+        // api/Booking
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookingQueue>>> GetBookingQueues()
         {
@@ -42,9 +42,10 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error : {ex.Message}");
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
+
         }
 
 
@@ -60,6 +61,7 @@ namespace ApiIsocare2.Controllers
                                     select new
                                     {
                                         q.queue_id,
+                                        q.booking_date,
                                         q.appointment_date,
                                         QueueStatus = qs.queue_status_name,
                                         QueueType = qt.type_name,
@@ -77,9 +79,10 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error : {ex.Message}");
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
+
         }
 
         [HttpGet("{id}")]
@@ -94,6 +97,7 @@ namespace ApiIsocare2.Controllers
                                     select new
                                     {
                                         q.queue_id,
+                                        q.booking_date,
                                         q.appointment_date,
                                         QueueStatus = qs.queue_status_name,
                                         QueueType = qt.type_name,
@@ -117,12 +121,14 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
 
 
         }
 
+        // GET: api/Booking/calendar/{transaction}
         [HttpGet("calendar/{transaction}")]
         public IActionResult GetQueueOnDate(string transaction)
         {
@@ -147,8 +153,8 @@ namespace ApiIsocare2.Controllers
                     })
                     .Select(g => new
                     {
-                        Date = g.Key.Date,
-                        Time = g.Key.Time,
+                        g.Key.Date,
+                        g.Key.Time,
                         Total = g.Count()
                     })
                     .ToList();
@@ -167,8 +173,8 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                // คำแนะนำในการจัดการข้อผิดพลาดที่เหมาะสม
-                return StatusCode(500, new { message = "An error occurred", detail = ex.Message });
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
         }
 
@@ -220,7 +226,8 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
 
         }
@@ -244,9 +251,10 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
+
         }
         
     }

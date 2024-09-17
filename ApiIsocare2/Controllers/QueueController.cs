@@ -1,5 +1,4 @@
 ﻿using ApiIsocare2.Data;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ApiIsocare2.Models;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +40,8 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
         }
             
@@ -79,10 +79,11 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
-            
+
+
         }
 
 
@@ -118,7 +119,8 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
 
 

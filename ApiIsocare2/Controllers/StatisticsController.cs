@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using ApiIsocare2.Data;
-using ApiIsocare2.Models;
-using Microsoft.AspNetCore.Http;
+﻿using ApiIsocare2.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -69,9 +66,10 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
+
         }
 
         [HttpGet("booking-statistics")]
@@ -136,9 +134,10 @@ namespace ApiIsocare2.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ("Error : " + ex.Message));
+                var innerExceptionMessage = ex.InnerException?.Message ?? "No inner exception";
+                return StatusCode(500, $"Error : {ex.Message}, Inner Exception : {innerExceptionMessage}");
             }
-            
+
         }
     }
 }
